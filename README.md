@@ -14,32 +14,31 @@
   <p align="center">Home Page</p>
 </div>
 
-# **Youtube Video for step by step Demonstration!**
-[![Video Tutorial](https://img.youtube.com/vi/g8X5AoqCJHc/0.jpg)](https://youtu.be/g8X5AoqCJHc)
 
 
-## Susbcribe:
-[https://www.youtube.com/@cloudchamp?
-](https://www.youtube.com/@cloudchamp?sub_confirmation=1)
 
 # Deploy Netflix Clone on Cloud using Jenkins - DevSecOps Project!
 
 ### **Phase 1: Initial Setup and Deployment**
 
-**Step 1: Launch EC2 (Ubuntu 22.04):**
+**Step 1: Launch EC2 (Ubuntu 24.04):**
 
-- Provision an EC2 instance on AWS with Ubuntu 22.04.
+- Provision an EC2 instance on AWS with Ubuntu 24.04
+    Use T3.large this machine wll host jenkins and sonarqube. These tools require a minimal CUP 
+    In security group section, select HTTPS (allow jenkins to get acces to our dokcerhub) and http
+    Add 25 GB for the disk 
+    Create an Elastic Ip and attach it to your EC2 instance. The Ec2 will have an static ip address even if you close you EC2 instance. 
 - Connect to the instance using SSH.
 
 **Step 2: Clone the Code:**
 
-- Update all the packages and then clone the code.
+- Once your Instance is ready, Update all the packages and then clone the code.
 - Clone your application's code repository onto the EC2 instance:
     
     ```bash
-    git clone https://github.com/N4si/DevSecOps-Project.git
+    git clone https://github.com/fleury12/DevSecOps-Project.git
     ```
-    
+   
 
 **Step 3: Install Docker and Run the App Using a Container:**
 
@@ -50,8 +49,7 @@
     sudo apt-get update
     sudo apt-get install docker.io -y
     sudo usermod -aG docker $USER  # Replace with your system's username, e.g., 'ubuntu'
-    newgrp docker
-    sudo chmod 777 /var/run/docker.sock
+    newgrp docker  #it alow you to execute docker command
     ```
     
 - Build and run your application using Docker containers:
@@ -64,8 +62,9 @@
     docker stop <containerid>
     docker rmi -f netflix
     ```
-
+Before getting access, make sure to add this port in the security group of this instance. Go to AWS CLI -> EC2 instance -> secutity -> security group -> edit inbound rules . source 0.0.0.0/0 
 It will show an error cause you need API key
+
 
 **Step 4: Get the API Key:**
 
@@ -81,10 +80,12 @@ Now recreate the Docker image with your api key:
 ```
 docker build --build-arg TMDB_V3_API_KEY=<your-api-key> -t netflix .
 ```
+    Application runs on this instance
 
 **Phase 2: Security**
 
 1. **Install SonarQube and Trivy:**
+Sonarqube is a tool that helps to scan vulnerabilities on you code. On the contrary, trivy helps to scann file system,repository and images.
     - Install SonarQube and Trivy on the EC2 instance to scan for vulnerabilities.
         
         sonarqube
@@ -96,6 +97,11 @@ docker build --build-arg TMDB_V3_API_KEY=<your-api-key> -t netflix .
         To access: 
         
         publicIP:9000 (by default username & password is admin)
+
+        Before getting access, make sure to add this port in the security group of this instance. Go to AWS CLI -> EC2 instance -> secutity -> security group -> edit inbound rules . source 0.0.0.0/0 
+
+        you will be asked to change this password.
+
         
         To install Trivy:
         ```
@@ -110,11 +116,12 @@ docker build --build-arg TMDB_V3_API_KEY=<your-api-key> -t netflix .
         ```
         trivy image <imageid>
         ```
+
         
         
 2. **Integrate SonarQube and Configure:**
-    - Integrate SonarQube with your CI/CD pipeline.
     - Configure SonarQube to analyze code for quality and security issues.
+        create a project manually ( name and key : Netflix  ) 
 
 **Phase 3: CI/CD Setup**
 
@@ -145,6 +152,8 @@ docker build --build-arg TMDB_V3_API_KEY=<your-api-key> -t netflix .
     - Access Jenkins in a web browser using the public IP of your EC2 instance.
         
         publicIp:8080
+        Before getting access, make sure to add this port in the security group of this instance. Go to AWS CLI -> EC2 instance -> secutity -> security group -> edit inbound rules. source 0.0.0.0/0 
+
         
 2. **Install Necessary Plugins in Jenkins:**
 
@@ -162,30 +171,44 @@ Install below plugins
 
 ### **Configure Java and Nodejs in Global Tool Configuration**
 
-Goto Manage Jenkins → Tools → Install JDK(17) and NodeJs(16)→ Click on Apply and Save
+Goto Manage Jenkins → Tools → Install JDK(17) and NodeJs(16)→ seclect install automatically 
+jdk-17.0.8.1+1 (name: sonar-scaner)
+NodesJs 16.2.0 (name: node16)
+Click on Apply and Save
 
 
 ### SonarQube
 
+Jenkins pipeline will use sonarqube in our pipeline. Then he needs to get acces.
 Create the token
+Go to sonarqube Administrator -> Security -> Users -> Tokens (create a token)
 
+Conenct sonarqube and jenkins
 Goto Jenkins Dashboard → Manage Jenkins → Credentials → Add Secret Text. It should look like this
 
-After adding sonar token
+After adding sonar token (name like sonar-token)
 
 Click on Apply and Save
 
 **The Configure System option** is used in Jenkins to configure different server
+we need to create  sonarqube server
+name: sonar-server
+add server URL : publicIp:9000
+select the authntication token 
 
 **Global Tool Configuration** is used to configure different tools that we install using Plugins
 
 We will install a sonar scanner in the tools.
 
 Create a Jenkins webhook
+Go to Sonarqube -> Administration -> Configure -> webhook -> add jenkins url :
+    ```
+    http://publicIp:8080/sonarqube-webhook
+    ```
 
 1. **Configure CI/CD Pipeline in Jenkins:**
 - Create a CI/CD pipeline in Jenkins to automate your application deployment.
-
+Make sure that the name of jdk , nodejs; scanner tools match with our tools configuration
 ```groovy
 pipeline {
     agent any
@@ -204,7 +227,7 @@ pipeline {
         }
         stage('Checkout from Git') {
             steps {
-                git branch: 'main', url: 'https://github.com/N4si/DevSecOps-Project.git'
+                git branch: 'main', url: 'https://github.com/fleury12/DevSecOps-Project.git'
             }
         }
         stage("Sonarqube Analysis") {
@@ -230,6 +253,7 @@ pipeline {
     }
 }
 ```
+The quality gate stage require a weebhook in sonarquebe inorder to infmor jenkins that it has finished
 
 Certainly, here are the instructions without step numbers:
 
@@ -249,9 +273,13 @@ Certainly, here are the instructions without step numbers:
 - Find the section for "OWASP Dependency-Check."
 - Add the tool's name, e.g., "DP-Check."
 - Save your settings.
+***configure Dp-Check tools:**
+    name : Dp-Check
+    select install automatically
+    dependency-check 12.1.9
 
 **Install Docker Tools and Docker Plugins:**
-
+we will use docker to build our container and run it
 - Go to "Dashboard" in your Jenkins web interface.
 - Navigate to "Manage Jenkins" → "Manage Plugins."
 - Click on the "Available" tab and search for "Docker."
@@ -264,7 +292,7 @@ Certainly, here are the instructions without step numbers:
 - Click on the "Install without restart" button to install these plugins.
 
 **Add DockerHub Credentials:**
-
+To allow jenkin to have acces to your dockerub accoutn, you need to set you dockerhub credential in jenkins
 - To securely handle DockerHub credentials in your Jenkins pipeline, follow these steps:
   - Go to "Dashboard" → "Manage Jenkins" → "Manage Credentials."
   - Click on "System" and then "Global credentials (unrestricted)."
@@ -272,6 +300,11 @@ Certainly, here are the instructions without step numbers:
   - Choose "Secret text" as the kind of credentials.
   - Enter your DockerHub credentials (Username and Password) and give the credentials an ID (e.g., "docker").
   - Click "OK" to save your DockerHub credentials.
+
+***configure docker tools:**
+    name : name
+    select install automatically
+    lates version 
 
 Now, you have installed the Dependency-Check plugin, configured the tool, and added Docker-related plugins along with your DockerHub credentials in Jenkins. You can now proceed with configuring your Jenkins pipeline to include these tools and credentials in your CI/CD process.
 
@@ -333,20 +366,20 @@ pipeline{
                 script{
                    withDockerRegistry(credentialsId: 'docker', toolName: 'docker'){   
                        sh "docker build --build-arg TMDB_V3_API_KEY=<yourapikey> -t netflix ."
-                       sh "docker tag netflix nasi101/netflix:latest "
-                       sh "docker push nasi101/netflix:latest "
+                       sh "docker tag netflix fleury12/netflix:latest "
+                       sh "docker push fleury12/netflix:latest "
                     }
                 }
             }
         }
         stage("TRIVY"){
             steps{
-                sh "trivy image nasi101/netflix:latest > trivyimage.txt" 
+                sh "trivy image fleury12/netflix:latest > trivyimage.txt" 
             }
         }
         stage('Deploy to container'){
             steps{
-                sh 'docker run -d --name netflix -p 8081:80 nasi101/netflix:latest'
+                sh 'docker run -d --name netflix -p 8081:80 fleury12/netflix:latest'
             }
         }
     }
@@ -356,13 +389,18 @@ pipeline{
 If you get docker login failed errorr
 
 sudo su
-sudo usermod -aG docker jenkins
+sudo usermod -aG docker jenkins 
 sudo systemctl restart jenkins
 
 
 ```
 
 **Phase 4: Monitoring**
+
+**Create another EC2 instance:**
+T3.medium because prometheus requires 4 CPU and 20 gb
+Attach an Elastic IP to this instance
+
 
 1. **Install Prometheus and Grafana:**
 
@@ -455,6 +493,7 @@ sudo systemctl restart jenkins
    You can access Prometheus in a web browser using your server's IP and port 9090:
 
    `http://<your-server-ip>:9090`
+   Make sure to add this port in the security group of this instance
 
    **Installing Node Exporter:**
 
@@ -517,7 +556,9 @@ sudo systemctl restart jenkins
    sudo systemctl status node_exporter
    ```
 
-   You can access Node Exporter metrics in Prometheus.
+   You can access Node_Exporter metrics in Prometheus.
+   Node-exporter default port is 9100
+   Make sure to  add this port in the security group. then you wiil alow to get access in your browser
 
 2. **Configure Prometheus Plugin Integration:**
 
@@ -559,7 +600,7 @@ sudo systemctl restart jenkins
    You can access Prometheus targets at:
 
    `http://<your-prometheus-ip>:9090/targets`
-
+    Make sure to  add this port in the security group.
 
 ####Grafana
 
@@ -626,6 +667,7 @@ sudo systemctl status grafana-server
 Open a web browser and navigate to Grafana using your server's IP address. The default port for Grafana is 3000. For example:
 
 `http://<your-server-ip>:3000`
+add this port in the security group
 
 You'll be prompted to log in to Grafana. The default username is "admin," and the default password is also "admin."
 
@@ -675,18 +717,164 @@ That's it! You've successfully installed and set up Grafana to work with Prometh
 
 2. **Configure Prometheus Plugin Integration:**
     - Integrate Jenkins with Prometheus to monitor the CI/CD pipeline.
+        install promotheus plugin in jenkis
+        go to system to set up the system (paht: prometheus)
+        click apply and save
+
 
 
 **Phase 5: Notification**
 
 1. **Implement Notification Services:**
     - Set up email notifications in Jenkins or other notification mechanisms.
+        - create application password in google
+            got to security and search app password follow instruction
+        - create an credential in jenkins for you gmail account 
+            username: yourmail 
+            password: app code
+        - configure Extended E-mail Notification
+            SMTP server: smtp.gmail.com
+            SMTP port: 465
+            adnvanced: 
+                select creendential and use SSL
+            default content type: html
+        - configure E-mail Notification
+            SMTP server: smtp.gmail.com
+            adnvanced:
+                Use SMTP Auth and fill up creendential 
+                use SSL
+                smtp port 465
+            you can test configuration
+        click save and apply 
+    
+2. **Add Notification Stage in pipeline:**
+your pipeline should be like this
+
+```groovy
+pipeline {
+    agent any
+    tools {
+        jdk 'jdk17'
+        nodejs 'node16'
+    }
+    environment {
+        SCANNER_HOME = tool 'sonar-scanner'
+    }
+    stages {
+        stage('clean workspace') {
+            steps {
+                cleanWs()
+            }
+        }
+        stage('Checkout from Git') {
+            steps {
+                git branch: 'main', url: 'https://github.com/N4si/DevSecOps-Project.git'
+            }
+        }
+        stage("Sonarqube Analysis") {
+            steps {
+                withSonarQubeEnv('sonar-server') {
+                    sh '''$SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=Netflix \
+                    -Dsonar.projectKey=Netflix'''
+                }
+            }
+        }
+        stage("quality gate") {
+            steps {
+                script {
+                    waitForQualityGate abortPipeline: false, credentialsId: 'sonar'
+                }
+            }
+        }
+        stage('Install Dependencies') {
+            steps {
+                sh "npm install"
+            }
+        }
+        stage('OWASP FS SCAN') {
+            steps {
+                dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit', odcInstallation: 'DP-Check'
+                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+            }
+        }
+        stage('TRIVY FS SCAN') {
+            steps {
+                sh "trivy fs . > trivyfs.txt"
+            }
+        }
+        stage("Docker Build & Push"){
+            steps{
+                script{
+                   withDockerRegistry(credentialsId: 'dockerhub', toolName: 'docker'){   
+                       sh "docker build --build-arg TMDB_V3_API_KEY=2634ec2145f37381b6d820b2c35e0674 -t netflix ."
+                       sh "docker tag netflix fleury12/netflix:latest "
+                       sh "docker push fleury12/netflix:latest "
+                    }
+                }
+            }
+        }
+        stage("TRIVY"){
+            steps{
+                sh "trivy image fleury12/netflix:latest > trivyimage.txt" 
+            }
+        }
+        stage('Deploy to container'){
+            steps{
+                sh 'docker run -d --name netflix -p 8081:80 fleury12/netflix:latest'
+            }
+        }
+    }
+    post {
+        always {
+            emailext(
+                attachLog: true,
+                subject: "Pipeline ${currentBuild.currentResult}: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+                body: "Le pipeline est terminé avec le résultat: ${currentBuild.currentResult}",
+                to: "angekoffi160@gmail.com",
+                attachmentsPattern: 'trivyfs.txt, trivyimage.txt'
+            )
+        }
+    }
+}
+
+```
+        
+
 
 # Phase 6: Kubernetes
 
 ## Create Kubernetes Cluster with Nodegroups
 
 In this phase, you'll set up a Kubernetes cluster with node groups. This will provide a scalable environment to deploy and manage your applications.
+follow this link to create your EKS IAM role and Node IAM role
+    https://docs.aws.amazon.com/fr_fr/eks/latest/userguide/cluster-iam-role.html
+    https://docs.aws.amazon.com/eks/latest/userguide/create-node-role.html
+    
+- create cluster 
+    configure name ,IAM ROLE, subnet 
+    your cluster is created  
+- create nodegroups
+    if your EKS auto mode was active, then the default node have been created
+            The CNI used is not compatible with EC2 machine. then you need to set up for your cluster 
+    in norder to be able to create another, you need to add the Amazon VPC CNI
+        This allow your node to have an addressage annd manage network betwenn pods of your nods
+        if it is not activiate, you wont be able to create a nodegroup
+    Select your cluster -> compute ->node groups -> add
+    Create 
+
+- Get access to your cluster in you CLI
+    install aws ClI
+    ```bash
+        curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+        unzip awscliv2.zip
+        sudo ./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli --update
+        aws --version
+    ```
+    set up the environment
+    ```bash
+        aws eks udate-kubeconfig --name Netflix --region your_cluster_regions
+    ```
+
 
 ## Monitor Kubernetes with Prometheus
 
@@ -714,7 +902,8 @@ To begin monitoring your Kubernetes cluster, you'll install the Prometheus Node 
     helm install prometheus-node-exporter prometheus-community/prometheus-node-exporter --namespace prometheus-node-exporter
     ```
 
-Add a Job to Scrape Metrics on nodeip:9001/metrics in prometheus.yml:
+Add a Job to Scrape Metrics on nodeip:9100/metrics in prometheus.yml:
+    Make sure that your added 9100 in the security group of your node
 
 Update your Prometheus configuration (prometheus.yml) to add a new job for scraping metrics from nodeip:9001/metrics. You can do this by adding the following configuration to your prometheus.yml file:
 
@@ -726,7 +915,7 @@ Update your Prometheus configuration (prometheus.yml) to add a new job for scrap
       - targets: ['node1Ip:9100']
 ```
 
-Replace 'your-job-name' with a descriptive name for your job. The static_configs section specifies the targets to scrape metrics from, and in this case, it's set to nodeip:9001.
+Replace 'your-job-name' with a descriptive name for your job. The static_configs section specifies the targets to scrape metrics from, and in this case, it's set to nodeip:9100.
 
 Don't forget to reload or restart Prometheus to apply these changes to your configuration.
 
@@ -750,7 +939,7 @@ To deploy an application with ArgoCD, you can follow these steps, which I'll out
    - `syncPolicy`: Configure the sync policy, including automatic syncing, pruning, and self-healing.
 
 4. **Access your Application**
-   - To Access the app make sure port 30007 is open in your security group and then open a new tab paste your NodeIP:30007, your app should be running.
+   - To Access the app make sure port 30007 is open in your security group of the node and then open a new tab paste your NodeIP:30007, your app should be running.
 
 **Phase 7: Cleanup**
 
