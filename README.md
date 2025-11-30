@@ -601,6 +601,11 @@ Attach an Elastic IP to this instance
 
    `http://<your-prometheus-ip>:9090/targets`
     Make sure to  add this port in the security group.
+    your prometheus page should be like without all this metrics. you will them after
+    graphana dasboard for node-export should be like this
+        <div align="center">
+        <img src="./public/assets/prometheus.png" alt="Logo" width="100%" height="100%">
+        </div>
 
 ####Grafana
 
@@ -714,12 +719,20 @@ You should now have a Grafana dashboard set up to visualize metrics from Prometh
 Grafana is a powerful tool for creating visualizations and dashboards, and you can further customize it to suit your specific monitoring needs.
 
 That's it! You've successfully installed and set up Grafana to work with Prometheus for monitoring and visualization.
+graphana dasboard for node-export should be like this
+<div align="center">
+    <img src="./public/assets/graphana-node.png" alt="Logo" width="100%" height="100%">
+    </div>
 
 2. **Configure Prometheus Plugin Integration:**
     - Integrate Jenkins with Prometheus to monitor the CI/CD pipeline.
         install promotheus plugin in jenkis
         go to system to set up the system (paht: prometheus)
         click apply and save
+    - graphana dasboard for jenkins should be like this
+        <div align="center">
+        <img src="./public/assets/graphana-jenkins.png" alt="Logo" width="100%" height="100%">
+        </div>
 
 
 
@@ -838,7 +851,10 @@ pipeline {
 }
 
 ```
-        
+you pipeline in jinkins
+    <div align="center">
+    <img src="./public/assets/jenkins-final.pngpng" alt="Logo" width="100%" height="100%">
+    </div>
 
 
 # Phase 6: Kubernetes
@@ -951,6 +967,9 @@ ArgoCD is a continous deployement tools, it allow to deploy automatically your a
    - `project`: Specify the project the application belongs to.
    - `source`: Set the source of your application, including the GitHub repository URL, revision, and the path to the application within the repository.
    - `syncPolicy`: Configure the sync policy, including automatic syncing, pruning, and self-healing.
+    <div align="center">
+    <img src="./public/assets/ArgoCD-flow.png" alt="Logo" width="100%" height="100%">
+    </div>
 
 4. **Access your Application**
    - To Access the app make sure port 30007 is open in your security group of the node and then open a new tab paste your NodeIP:30007, your app should be running.
