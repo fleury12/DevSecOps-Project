@@ -922,11 +922,25 @@ Don't forget to reload or restart Prometheus to apply these changes to your conf
 To deploy an application with ArgoCD, you can follow these steps, which I'll outline in Markdown format:
 
 ### Deploy Application with ArgoCD
+ArgoCD is a continous deployement tools, it allow to deploy automatically your app when a change is mage on your repo.it uses Helm chat or k8s manifest to deploy your app.
 
 1. **Install ArgoCD:**
 
-   You can install ArgoCD on your Kubernetes cluster by following the instructions provided in the [EKS Workshop](https://archive.eksworkshop.com/intermediate/290_argocd/install/) documentation.
+   You can install ArgoCD on your Kubernetes cluster by following the instructions :
 
+    ```bash
+    kubectl create namespace argocd
+    kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/v2.11.2/manifests/install.yaml
+    kubectl patch svc argocd-server -n argocd \
+    -p '{"spec": {"type": "LoadBalancer"}}'
+    export ARGOCD_SERVER=$(kubectl get svc argocd-server -n argocd -o json | jq --raw-output '.status.loadBalancer.ingress[0].hostname')
+
+    export ARGOCD_PWD=$(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d)
+    echo "Argo CD admin password: $ARGOCD_PWD"
+    ```
+    copy and paste the ARGOCD_SERVER link in you browser
+        username: admin 
+        passw: $ARGOCD_PWD
 2. **Set Your GitHub Repository as a Source:**
 
    After installing ArgoCD, you need to set up your GitHub repository as a source for your application deployment. This typically involves configuring the connection to your repository and defining the source for your ArgoCD application. The specific steps will depend on your setup and requirements.
