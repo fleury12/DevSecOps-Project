@@ -2,7 +2,7 @@ kind: Service
 apiVersion: v1
 metadata:
   name: node-exporter
-  namespace: prometheus-node-exporter
+  namespace: monitoring
 spec:
   selector:
       app: node-exporter
