@@ -18,7 +18,8 @@ store.dispatch(extendedApi.endpoints.getConfiguration.initiate(undefined));
 initApm({
   serviceName: 'netflix-frontend',
   serverUrl: 'https://apm-server-quickstart-apm-http.elastic-system.svc:8200',
-  environment: 'development'
+  environment: 'development',
+  secretToken: '5GiH72GwxNNxWIsp2xChXALy'
 });
 
 const root = ReactDOM.createRoot(
