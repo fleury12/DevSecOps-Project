@@ -6,7 +6,8 @@
       elasticApm.init({
         serviceName: 'netflix-frontend',   // nom qui apparaîtra dans Kibana
         serverUrl: 'https://apm-server-quickstart-apm-http.elastic-system.svc:8200',
-        environment: 'development'
+        environment: 'development',
+        verifyServerCert: false
       });
     </script>
     <meta charset="UTF-8" />
