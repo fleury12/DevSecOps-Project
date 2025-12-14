@@ -14,6 +14,13 @@ import router from "./routes";
 import MainLoadingScreen from "./components/MainLoadingScreen";
 import 'elastic-apm-node/start'
 
+var apm = require('elastic-apm-node').start({
+  serviceName: 'devsecop-application',
+
+  serverUrl: 'http://apm-server-quickstart-apm-http.elastic-system.svc:8200',
+
+  environment: 'my-environment'
+})
 store.dispatch(extendedApi.endpoints.getConfiguration.initiate(undefined));
 
 const root = ReactDOM.createRoot(
@@ -32,12 +39,3 @@ root.render(
   </Provider>
 );
 // Add this to the very top of the first file loaded in your app
-var apm = require('elastic-apm-node').start({
-  serviceName: 'my-service-name',
-
-  secretToken: '',
-
-  serverUrl: 'http://localhost:8200',
-
-  environment: 'my-environment'
-})
