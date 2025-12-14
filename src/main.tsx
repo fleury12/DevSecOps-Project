@@ -12,7 +12,7 @@ import { extendedApi } from "./store/slices/configuration";
 import palette from "./theme/palette";
 import router from "./routes";
 import MainLoadingScreen from "./components/MainLoadingScreen";
-import { init as initApm } from '@elastic/apm-rum';
+
 store.dispatch(extendedApi.endpoints.getConfiguration.initiate(undefined));
 
 const root = ReactDOM.createRoot(
@@ -30,10 +30,13 @@ root.render(
     </React.StrictMode>
   </Provider>
 );
+// Add this to the very top of the first file loaded in your app
+var apm = require('elastic-apm-node').start({
+  serviceName: 'my-service-name',
 
+  secretToken: '',
 
-initApm({
-  serviceName: 'devsecops-frontend',
-  serverUrl: 'http://localhost:8200', // via port-forward
-  environment: 'development',
-});
+  serverUrl: 'http://localhost:8200',
+
+  environment: 'my-environment'
+})

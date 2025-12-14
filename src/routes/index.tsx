@@ -1,6 +1,6 @@
 import { Navigate, createBrowserRouter } from "react-router-dom";
 import { MAIN_PATH } from "src/constant";
-import apm from 'elastic-apm-node';
+
 import MainLayout from "src/layouts/MainLayout";
 
 const router = createBrowserRouter([
@@ -34,9 +34,3 @@ const router = createBrowserRouter([
 ]);
 
 export default router;
-
-apm.start({
-  serviceName: 'devsecops-backend',
-  serverUrl: 'http://apm-server-quickstart-apm-http.elastic-system.svc:8200',
-  environment: 'development',
-});
