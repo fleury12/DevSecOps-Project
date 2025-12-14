@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <script src="https://unpkg.com/@elastic/apm-rum/dist/bundles/elastic-apm-rum.umd.min.js" crossorigin></script>
+    <script>
+      elasticApm.init({
+        serviceName: 'netflix-frontend',   // nom qui apparaîtra dans Kibana
+        serverUrl: 'http://apm-server-quickstart-apm-http.elastic-system.svc:8200',
+        environment: 'development'
+      });
+    </script>
     <meta charset="UTF-8" />
     <link rel="icon" href="/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
