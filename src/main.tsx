@@ -12,6 +12,7 @@ import { extendedApi } from "./store/slices/configuration";
 import palette from "./theme/palette";
 import router from "./routes";
 import MainLoadingScreen from "./components/MainLoadingScreen";
+import 'elastic-apm-node/start'
 
 store.dispatch(extendedApi.endpoints.getConfiguration.initiate(undefined));
 
