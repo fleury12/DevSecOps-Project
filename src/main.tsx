@@ -13,14 +13,14 @@ import palette from "./theme/palette";
 import router from "./routes";
 import MainLoadingScreen from "./components/MainLoadingScreen";
 import 'elastic-apm-node/start'
+import { init as initApm } from '@elastic/apm-rum';
 
-var apm = require('elastic-apm-node').start({
-  serviceName: 'devsecop-application',
-
+initApm({
+  serviceName: 'netflix-frontend',
   serverUrl: 'http://apm-server-quickstart-apm-http.elastic-system.svc:8200',
+  environment: 'development',
+});
 
-  environment: 'my-environment'
-})
 store.dispatch(extendedApi.endpoints.getConfiguration.initiate(undefined));
 
 const root = ReactDOM.createRoot(
